@@ -49,6 +49,8 @@ public class PlayerMovement : MonoBehaviour
         Quaternion targetRotation = Quaternion.RotateTowards(playerVisual.transform.rotation, lookRotation, visualRotationSpeed);
 
         playerVisual.transform.rotation = targetRotation;
+        
+        // hi
     }
     
     private void Movement()
