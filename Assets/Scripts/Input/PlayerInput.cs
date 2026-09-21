@@ -25,5 +25,6 @@ public class PlayerInput : MonoBehaviour
     private void OnDisable() => _playerInputActionsMap.Disable();
 
     public Vector2 GetMoveInput() => _playerInputActionsMap.Player.Move.ReadValue<Vector2>();
+    public bool GetJumpInput() => _playerInputActionsMap.Player.Jump.IsPressed();
     public bool GetSprintInput() => _playerInputActionsMap.Player.Sprint.IsPressed();
 }

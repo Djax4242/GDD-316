@@ -5,11 +5,15 @@ using UnityEngine.AI;
 public class LargeWalkerAI : MonoBehaviour
 {
     [SerializeField] private NavMeshAgent walkerNavmeshAgent;
-    [SerializeField] private Transform target;
-    
+    [SerializeField] private GameObject player;
+
+    private void Awake()
+    {
+        player = FindAnyObjectByType<PlayerMovement>().gameObject;
+    }
 
     private void Update()
     {
-        walkerNavmeshAgent.SetDestination(target.position);
+        walkerNavmeshAgent.SetDestination(player.transform.position);
     }
 }
