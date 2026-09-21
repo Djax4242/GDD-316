@@ -107,14 +107,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 864bf3d0d235fba408138e55c98ee9ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
-  legTarget: {fileID: 960837377350181104}
+  legIkTarget: {fileID: 960837377350181104}
   raycastPosition: {fileID: 4974034886423679512}
-  maxRaycastDistance: 20
+  legTip: {fileID: 6838374046907143345}
+  maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 2
-  stepOvershoot: 0.6
+  stepOvershoot: 0.9
   stepDuration: 0.4
   stepCurveHorizontal:
     serializedVersion: 2
@@ -175,8 +176,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   stepHeight: 7
   isFootGrounded: 1
-  showRaycastOrigin: 0
-  showRaycastHitPosition: 0
+  showRaycast: 1
+  showRaycastHitPosition: 1
   showRaycastNormal: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
@@ -1553,8 +1554,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3522602329125029463}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: 0.38268343, z: -0, w: 0.92387956}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1562,7 +1563,7 @@ Transform:
   - {fileID: 1743443841342405330}
   - {fileID: 3803527577505823887}
   - {fileID: 3870150067031788614}
-  m_Father: {fileID: 4103375833737758225}
+  m_Father: {fileID: 8171470178022589229}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3709873108265719643
 GameObject:
@@ -1704,7 +1705,7 @@ GameObject:
   - component: {fileID: 8465989332583808522}
   - component: {fileID: 223470278292808978}
   m_Layer: 6
-  m_Name: Visual Root
+  m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1821,7 +1822,6 @@ Transform:
   - {fileID: 1219316159821791957}
   - {fileID: 8508971941895044982}
   - {fileID: 134119232092981962}
-  - {fileID: 6295790611415313492}
   m_Father: {fileID: 3893820955967453440}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2921563297041443372
@@ -2194,14 +2194,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 864bf3d0d235fba408138e55c98ee9ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
-  legTarget: {fileID: 125400768962193819}
+  legIkTarget: {fileID: 125400768962193819}
   raycastPosition: {fileID: 1743443841342405330}
-  maxRaycastDistance: 20
+  legTip: {fileID: 1394034694819737925}
+  maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 2
-  stepOvershoot: 0.6
+  stepOvershoot: 0.9
   stepDuration: 0.4
   stepCurveHorizontal:
     serializedVersion: 2
@@ -2262,8 +2263,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   stepHeight: 7
   isFootGrounded: 1
-  showRaycastOrigin: 0
-  showRaycastHitPosition: 0
+  showRaycast: 1
+  showRaycastHitPosition: 1
   showRaycastNormal: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
@@ -2633,6 +2634,7 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 3893820955967453440}
+  - {fileID: 6295790611415313492}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!195 &1424131519450301916
@@ -2645,7 +2647,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 1
-  m_Speed: 4
+  m_Speed: 5
   m_Acceleration: 25
   avoidancePriority: 50
   m_AngularSpeed: 25
@@ -2654,7 +2656,7 @@ NavMeshAgent:
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 2
-  m_BaseOffset: 1.5
+  m_BaseOffset: 1
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!114 &7498619143527897813
@@ -2694,10 +2696,11 @@ MonoBehaviour:
   backLeftTip: {fileID: 7746535848040632043}
   walkerNavmeshAgent: {fileID: 1424131519450301916}
   stepOrder: 00000000030000000100000002000000i
-  bodyVisual: {fileID: 5014882728132190991}
-  showLegTips: 1
+  urgentStretch: 0.75
+  body: {fileID: 5014882728132190991}
+  showLegTips: 0
   showLegDiagonals: 0
-  showLegNormal: 1
+  showLegNormal: 0
   gizmoSphereSize: 1
   gizmoLength: 15
 --- !u!1 &6786874618833725076
@@ -3204,14 +3207,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 864bf3d0d235fba408138e55c98ee9ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
-  legTarget: {fileID: 3435888768685386844}
+  legIkTarget: {fileID: 3435888768685386844}
   raycastPosition: {fileID: 3803527577505823887}
-  maxRaycastDistance: 20
+  legTip: {fileID: 6851233796437227765}
+  maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 2
-  stepOvershoot: 0.6
+  stepOvershoot: 0.9
   stepDuration: 0.4
   stepCurveHorizontal:
     serializedVersion: 2
@@ -3272,8 +3276,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   stepHeight: 7
   isFootGrounded: 1
-  showRaycastOrigin: 0
-  showRaycastHitPosition: 0
+  showRaycast: 1
+  showRaycastHitPosition: 1
   showRaycastNormal: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
@@ -3408,14 +3412,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 864bf3d0d235fba408138e55c98ee9ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
-  legTarget: {fileID: 2769881951223215507}
+  legIkTarget: {fileID: 2769881951223215507}
   raycastPosition: {fileID: 3870150067031788614}
-  maxRaycastDistance: 20
+  legTip: {fileID: 7746535848040632043}
+  maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 2
-  stepOvershoot: 0.6
+  stepOvershoot: 0.9
   stepDuration: 0.4
   stepCurveHorizontal:
     serializedVersion: 2
@@ -3476,8 +3481,8 @@ MonoBehaviour:
     m_RotationOrder: 4
   stepHeight: 7
   isFootGrounded: 1
-  showRaycastOrigin: 0
-  showRaycastHitPosition: 0
+  showRaycast: 1
+  showRaycastHitPosition: 1
   showRaycastNormal: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2

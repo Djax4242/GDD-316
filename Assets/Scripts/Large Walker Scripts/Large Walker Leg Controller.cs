@@ -28,6 +28,8 @@ public class LargeWalkerLegController : MonoBehaviour
     [Header("--- Leg Settings ---")]
     [Tooltip("Order in which the legs walk")]
     [SerializeField] private int[] stepOrder = { 0, 3, 1, 2 };
+    [Tooltip("A leg stretched this far past its own step threshold (1 = a whole extra threshold) is allowed to cut the line instead of waiting its turn")]
+    [SerializeField] private float urgentStretch = 0.75f;
     private int _next;
     
     [Space]
@@ -53,6 +55,7 @@ public class LargeWalkerLegController : MonoBehaviour
 
     private void Awake()
     {
+        // Generate a rotation offset that the body uses when it spins. The initial offset the body has
         _restLocalRotation = body.transform.localRotation;
     }
 
@@ -64,37 +67,61 @@ public class LargeWalkerLegController : MonoBehaviour
 
     private void RotateBody()
     {
+        // Get the diagonal directions from the front and back legs to compute an average normal direction that the legs positions create.
         Vector3 frontLeftToBackRight = backRightTip.position - frontLeftTip.position;
         Vector3 frontRightToBackLeft = backLeftTip.position - frontRightTip.position;
         Vector3 averageTipNormal = -Vector3.Cross(frontRightToBackLeft, frontLeftToBackRight).normalized;
 
+        // Convert world normal to local relative to the bodies parent. Then rotate the body to face the normal. 
         Vector3 localNormal = body.transform.parent.InverseTransformDirection(averageTipNormal);
-        body.transform.localRotation = Quaternion.FromToRotation(Vector3.up, localNormal);
+        body.transform.localRotation = Quaternion.FromToRotation(Vector3.up, localNormal) * _restLocalRotation;
     }
 
     private void OrderLegs()
     {
         // Wait until every foot is planted. If any leg is not grounded, this returns true.
         if (legs.Any(leg => !leg.isFootGrounded)) return;
-
-        // Only the leg whose turn it is may step
-        // Which leg's turn is it? Look up its index in the step order
-        int legIndex = stepOrder[_next];
         
-        // Get that leg
-        WalkerLeg currentLeg = legs[legIndex];
+        // This is the slot that wins this current frame. -1 is the nothing found exit below. A real slot is always greater than 0. Used to pick a leg in the walk order. 
+        int chosenSlot = -1;
+
+        // Loops four times
+        for (int i = 0; i < stepOrder.Length; i++)
+        {
+            int slot = (_next + i) % stepOrder.Length;
+            
+            // This leg has an urgency below zero, re-run the loop.
+            if (legs[stepOrder[slot]].StepUrgency < 0f) continue;
+
+            chosenSlot = slot;
+            break;
+        }
+
+        // Nobody needs to step this frame
+        if (chosenSlot < 0) return;
+
+        // A leg that is badly stretched jumps the queue, otherwise it keeps stretching while
+        // the legs ahead of it take tiny steps.
+        for (int slot = 0; slot < stepOrder.Length; slot++)
+        {
+            float urgency = legs[stepOrder[slot]].StepUrgency;
+            if (urgency < urgentStretch) continue;
+            if (urgency <= legs[stepOrder[chosenSlot]].StepUrgency) continue;
+
+            chosenSlot = slot;
+        }
 
         // Ask the leg to step. CheckForStep returns true if the leg has started a step.
-        bool didStep = currentLeg.CheckForStep();
+        bool didStep = legs[stepOrder[chosenSlot]].CheckForStep();
         if (!didStep) return;
-        
-        // Move the turn to the next position in the order
-        _next += 1;
 
-        // If we've gone past the end of the order, wrap back to the start
-        if (_next >= stepOrder.Length) _next = 0;
+        // The turn resumes from whoever follows the leg that just stepped, so the gait keeps
+        // cycling in the authored order.
+        _next = (chosenSlot + 1) % stepOrder.Length;
     }
 
+    
+    
 #if UNITY_EDITOR
     
     private void OnDrawGizmos()
