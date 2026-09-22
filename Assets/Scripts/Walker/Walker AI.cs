@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class LargeWalkerAI : MonoBehaviour
+public class WalkerAI : MonoBehaviour
 {
     [SerializeField] private NavMeshAgent walkerNavmeshAgent;
     [SerializeField] private GameObject player;

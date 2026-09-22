@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class WalkerLeg : MonoBehaviour
 {
@@ -19,6 +20,11 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private Transform raycastPosition;
     [Tooltip("Need this to check to see if the leg is stretching")]
     [SerializeField] private Transform legTip;
+    [Space]
+    [SerializeField] private AudioClip[] stepClips;
+    [SerializeField] private AudioSource legSource;
+    [SerializeField] private NavMeshAgent walkerNavmeshAgent;
+    
     
     [Space]
     [Header("--- Leg Settings ---")]
@@ -30,8 +36,9 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private float minDistanceToStep;
     [Tooltip("How far past the home point the foot lands, as a fraction of minDistanceToStep. Keep below 1 or the leg will re-step immediately")]
     [SerializeField, Range(0f, 0.9f)] private float stepOvershoot = 0.6f;
-    [Tooltip("How long the leg takes to step")]
-    [SerializeField] private float stepDuration;
+    [Tooltip("Min time the leg takes to step. Based on speed")]
+    [SerializeField] private float minStepDuration;
+    [SerializeField] private float maxStepDuration;
     [Tooltip("The horizontal movement of the leg")]
     [SerializeField] private AnimationCurve stepCurveHorizontal;
     [Tooltip("The vertical movement of the leg. Does not control how high the leg steps")]
@@ -52,6 +59,7 @@ public class WalkerLeg : MonoBehaviour
     ///     The controller uses this to decide who gets the next step instead of using the step order.
     /// </summary>
     public float StepUrgency { get; private set; } = -1f;
+    private float _stepDuration;
     
     
     
@@ -127,6 +135,9 @@ public class WalkerLeg : MonoBehaviour
 
     private IEnumerator TakeStep()
     {
+        float lerpValue = walkerNavmeshAgent.velocity.magnitude / walkerNavmeshAgent.speed;
+        _stepDuration = Mathf.Lerp(maxStepDuration, minStepDuration, lerpValue);
+        
         isFootGrounded = false;
         StepUrgency = -1f;
         float elapsedTime = 0;
@@ -135,11 +146,11 @@ public class WalkerLeg : MonoBehaviour
         // Fallback so the foot stays put if the raycast misses
         Vector3 target = originalPosition;
 
-        while (elapsedTime < stepDuration)
+        while (elapsedTime < _stepDuration)
         {
             elapsedTime += Time.deltaTime;
 
-            float n = Mathf.Clamp01(elapsedTime / stepDuration);
+            float n = Mathf.Clamp01(elapsedTime / _stepDuration);
             float t = stepCurveHorizontal.Evaluate(n);
 
             // todo make a gizmo of the offset raycast origin
@@ -164,7 +175,9 @@ public class WalkerLeg : MonoBehaviour
         }
 
         // Make sure the foot ends exactly on the ground, even if the curves don't end perfectly
+        
         _currentTipPos = target;
+        if (legSource != null) legSource.PlayOneShot(stepClips[UnityEngine.Random.Range(0, stepClips.Length)]);
         legIkTarget.position = target;
         isFootGrounded = true;
     }

@@ -4,7 +4,7 @@ using Microsoft.Win32.SafeHandles;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class LargeWalkerLegController : MonoBehaviour
+public class LegController : MonoBehaviour
 {
     /// <summary>
     ///
@@ -34,6 +34,8 @@ public class LargeWalkerLegController : MonoBehaviour
     
     [Space]
     [Header("--- Body Settings ---")]
+    [Tooltip("Tilt the body when the walker takes a step")]
+    [SerializeField] private bool tiltBody;
     [Tooltip("Need this so we can rotate the body to make the walk look more natural and have weight")]
     [SerializeField] private GameObject body;
     // The initial offset the body has
@@ -62,10 +64,10 @@ public class LargeWalkerLegController : MonoBehaviour
     private void Update()
     {
         OrderLegs();
-        RotateBody();
+        if(tiltBody) TiltBody();
     }
 
-    private void RotateBody()
+    private void TiltBody()
     {
         // Get the diagonal directions from the front and back legs to compute an average normal direction that the legs positions create.
         Vector3 frontLeftToBackRight = backRightTip.position - frontLeftTip.position;
