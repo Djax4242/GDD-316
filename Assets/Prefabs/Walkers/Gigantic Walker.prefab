@@ -1631,6 +1631,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 200
+  nextStepThreshold: 1
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1
@@ -1937,6 +1938,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 200
+  nextStepThreshold: 1
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1
@@ -2056,6 +2058,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 200
+  nextStepThreshold: 1
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1
@@ -3667,6 +3670,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 200
+  nextStepThreshold: 1
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1

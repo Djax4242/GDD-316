@@ -117,10 +117,10 @@ MonoBehaviour:
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
-  minDistanceToStep: 2
+  minDistanceToStep: 4
   stepOvershoot: 0.9
-  minStepDuration: 0.15
-  maxStepDuration: 0.4
+  minStepDuration: 0.2
+  maxStepDuration: 0.5
   stepCurveHorizontal:
     serializedVersion: 2
     m_Curve:
@@ -179,6 +179,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  nextStepThreshold: 0.8
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1
@@ -2208,10 +2209,10 @@ MonoBehaviour:
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
-  minDistanceToStep: 2
+  minDistanceToStep: 4
   stepOvershoot: 0.9
-  minStepDuration: 0.15
-  maxStepDuration: 0.4
+  minStepDuration: 0.2
+  maxStepDuration: 0.5
   stepCurveHorizontal:
     serializedVersion: 2
     m_Curve:
@@ -2270,6 +2271,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  nextStepThreshold: 0.8
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1
@@ -3226,10 +3228,10 @@ MonoBehaviour:
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
-  minDistanceToStep: 2
+  minDistanceToStep: 4
   stepOvershoot: 0.9
-  minStepDuration: 0.15
-  maxStepDuration: 0.4
+  minStepDuration: 0.2
+  maxStepDuration: 0.5
   stepCurveHorizontal:
     serializedVersion: 2
     m_Curve:
@@ -3288,6 +3290,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  nextStepThreshold: 0.8
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1
@@ -3435,10 +3438,10 @@ MonoBehaviour:
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
-  minDistanceToStep: 2
+  minDistanceToStep: 4
   stepOvershoot: 0.9
-  minStepDuration: 0.15
-  maxStepDuration: 0.4
+  minStepDuration: 0.2
+  maxStepDuration: 0.5
   stepCurveHorizontal:
     serializedVersion: 2
     m_Curve:
@@ -3497,6 +3500,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  nextStepThreshold: 0.8
   isFootGrounded: 1
   showRaycast: 1
   showRaycastHitPosition: 1

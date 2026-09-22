@@ -8,13 +8,13 @@ public class WalkerLeg : MonoBehaviour
     /// <summary>
     ///
     ///     Handles procedural walking of 1 leg
-    /// 
+    ///
     /// </summary>
-    
-    
-    
+
+
+
     [Header("--- References ---")]
-    [Tooltip("The IK target for this leg")]
+    [Tooltip("The IK target for this leg. This is the object that the animation rigging package made")]
     [SerializeField] private Transform legIkTarget;
     [Tooltip("Point at which the downwards raycast fires to check where to step")]
     [SerializeField] private Transform raycastPosition;
@@ -24,8 +24,8 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private AudioClip[] stepClips;
     [SerializeField] private AudioSource legSource;
     [SerializeField] private NavMeshAgent walkerNavmeshAgent;
-    
-    
+
+
     [Space]
     [Header("--- Leg Settings ---")]
     [Tooltip("How far down the leg is willing to step")]
@@ -45,6 +45,8 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private AnimationCurve stepCurveVertical;
     [Tooltip("How high the leg steps")]
     [SerializeField] private float stepHeight;
+    [Tooltip("Percentage of the legs animation where the walker will allow another leg to step")]
+    [SerializeField, Range(0f, 1f)] private float nextStepThreshold;
     // The current position of the tip of the leg irrespective of the raycast point
     private Vector3 _currentTipPos;
     [HideInInspector] public bool isFootGrounded = true;
@@ -60,9 +62,12 @@ public class WalkerLeg : MonoBehaviour
     /// </summary>
     public float StepUrgency { get; private set; } = -1f;
     private float _stepDuration;
-    
-    
-    
+    // True for the whole of TakeStep. isFootGrounded gets released early at nextStepThreshold so another leg
+    // can start moving, so it can't also be the thing that stops this leg starting a second step on itself.
+    private bool _isStepping;
+
+
+
     [Space(3)]
     [Header("=== DEBUG ===")]
     [Tooltip("Show where the raycast originates from")]
@@ -73,8 +78,8 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private bool showRaycastNormal;
     [SerializeField] private float gizmoSphereSize;
     [SerializeField] private float gizmoLength;
-    
-    
+
+
 
     private void Awake()
     {
@@ -89,7 +94,7 @@ public class WalkerLeg : MonoBehaviour
 
         UpdateStepUrgency();
     }
-    
+
     private void UpdateStepUrgency()
     {
         // Fire the step raycast once a frame and work out how stretched the leg is, so the
@@ -97,8 +102,8 @@ public class WalkerLeg : MonoBehaviour
 
         // First checks to see if we have a valid step target. This could be false if the walker was near an edge and the raycast fails.
         _hasStepTarget = Physics.Raycast(raycastPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers);
-        
-        // 
+
+        //
         if (_hasStepTarget)
         {
             _stepTarget = hitInfo.point;
@@ -109,22 +114,27 @@ public class WalkerLeg : MonoBehaviour
             _stepTarget = _currentTipPos;
         }
 
-        // A leg that is mid step, or that has nowhere valid to put its foot, is not a candidate so we exit early and give it a low step urgency. 
-        if (!isFootGrounded || !_hasStepTarget)
+        // A leg that is mid step, or that has nowhere valid to put its foot, is not a candidate so we exit early and give it a low step urgency.
+        // Tests _isStepping rather than isFootGrounded on purpose. Past nextStepThreshold the foot is still in
+        // the air but counts as grounded, and measuring the stretch from a mid air tip position reads as a huge
+        // urgency and asks the leg to step again while it is already stepping.
+        if (_isStepping || !_hasStepTarget)
         {
             StepUrgency = -1f;
             return;
         }
 
-        // Calculate a step urgency based on how far away the tip of the leg is to where it wants to go. 
+        // Calculate a step urgency based on how far away the tip of the leg is to where it wants to go.
         float distanceToTarget = Vector3.Distance(_currentTipPos, _stepTarget);
         StepUrgency = (distanceToTarget - minDistanceToStep) / minDistanceToStep;
     }
 
     public bool CheckForStep()
     {
-        // No need to check for a step opportunity if the foot is already moving
-        if (!isFootGrounded) return false;
+        // No need to check for a step opportunity if the foot is already moving. This has to be _isStepping, not
+        // isFootGrounded, or a leg past nextStepThreshold would start a second TakeStep on top of the one still
+        // running. Both coroutines would then fight over _currentTipPos and the foot would snap.
+        if (_isStepping) return false;
 
         // The foot is still close enough to where it wants to be, so leave it planted
         if (StepUrgency < 0f) return false;
@@ -137,12 +147,13 @@ public class WalkerLeg : MonoBehaviour
     {
         float lerpValue = walkerNavmeshAgent.velocity.magnitude / walkerNavmeshAgent.speed;
         _stepDuration = Mathf.Lerp(maxStepDuration, minStepDuration, lerpValue);
-        
+
+        _isStepping = true;
         isFootGrounded = false;
         StepUrgency = -1f;
         float elapsedTime = 0;
         Vector3 originalPosition = _currentTipPos;
-        
+
         // Fallback so the foot stays put if the raycast misses
         Vector3 target = originalPosition;
 
@@ -162,7 +173,7 @@ public class WalkerLeg : MonoBehaviour
             if (Physics.Raycast(offsetRayOrigin, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers)) target = hitInfo.point;
 
             Vector3 pos = Vector3.Lerp(originalPosition, target, t);
-            
+
             // Lift the leg off the ground
             float legLift = stepCurveVertical.Evaluate(n) * stepHeight;
             pos += Vector3.up * legLift;
@@ -170,19 +181,28 @@ public class WalkerLeg : MonoBehaviour
             _currentTipPos = pos;
             // Set the target here too so the IK doesn't lag a frame behind
             legIkTarget.position = pos;
-            
+
+            if (n >= nextStepThreshold && !isFootGrounded)
+            {
+                isFootGrounded = true;
+            }
+
             yield return null;
         }
 
         // Make sure the foot ends exactly on the ground, even if the curves don't end perfectly
-        
+
         _currentTipPos = target;
         if (legSource != null) legSource.PlayOneShot(stepClips[UnityEngine.Random.Range(0, stepClips.Length)]);
         legIkTarget.position = target;
+
+        // isFootGrounded is normally already true from nextStepThreshold, but it still needs setting here for
+        // the case where that threshold is 1 and the early release never ran.
         isFootGrounded = true;
+        _isStepping = false;
     }
-    
-    
+
+
 
 #if UNITY_EDITOR
 
@@ -191,10 +211,10 @@ public class WalkerLeg : MonoBehaviour
         if (showRaycast)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(raycastPosition.position, gizmoSphereSize); 
-            Gizmos.DrawRay(raycastPosition.position, Vector3.down * maxStepRaycastDistance); 
+            Gizmos.DrawSphere(raycastPosition.position, gizmoSphereSize);
+            Gizmos.DrawRay(raycastPosition.position, Vector3.down * maxStepRaycastDistance);
         }
-        
+
         if (Physics.Raycast(raycastPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers))
         {
             if (showRaycastHitPosition)
@@ -202,14 +222,14 @@ public class WalkerLeg : MonoBehaviour
                 Gizmos.color = Color.blue;
                 Gizmos.DrawSphere(hitInfo.point, gizmoSphereSize);
             }
-            
+
             if (showRaycastNormal)
             {
                 Gizmos.color = Color.orangeRed;
                 Gizmos.DrawRay(hitInfo.point, hitInfo.normal * gizmoLength);
             }
         }
-        
+
         Gizmos.DrawSphere(_currentTipPos, gizmoSphereSize);
     }
 
