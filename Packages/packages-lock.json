@@ -17,6 +17,19 @@
       },
       "hash": "63202654d5f9998fe9f583123c08e8cb13a41669"
     },
+    "com.unity.ai.inference": {
+      "version": "2.6.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.8.17",
+        "com.unity.dt.app-ui": "1.3.6",
+        "com.unity.collections": "2.4.3",
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.modules.imageconversion": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.14",
       "depth": 0,
@@ -60,7 +73,7 @@
     },
     "com.unity.collections": {
       "version": "6.6.0",
-      "depth": 2,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {
         "com.unity.burst": "1.8.25",
@@ -68,6 +81,18 @@
         "com.unity.test-framework": "1.4.6",
         "com.unity.test-framework.performance": "3.2.0"
       }
+    },
+    "com.unity.dt.app-ui": {
+      "version": "2.1.11",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.androidjni": "1.0.0",
+        "com.unity.modules.uielements": "1.0.0",
+        "com.unity.modules.screencapture": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
     },
     "com.unity.ext.nunit": {
       "version": "2.1.0",
@@ -124,7 +149,7 @@
     },
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.6",
-      "depth": 3,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -134,6 +159,20 @@
       "depth": 1,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.pipeline": {
+      "version": "0.7.0-exp.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.test-framework": "1.1.33",
+        "com.unity.nuget.mono-cecil": "1.11.6",
+        "com.unity.modules.uielements": "1.0.0",
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.modules.screencapture": "1.0.0",
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.profiling.core": {
@@ -192,7 +231,7 @@
       "source": "builtin",
       "dependencies": {
         "com.unity.render-pipelines.core": "17.6.0",
-        "com.unity.searcher": "4.9.3",
+        "com.unity.searcher": "4.9.5",
         "com.unity.graph-authoring": "1.0.0"
       }
     },
@@ -219,7 +258,7 @@
     },
     "com.unity.test-framework.performance": {
       "version": "6.6.0",
-      "depth": 3,
+      "depth": 2,
       "source": "builtin",
       "dependencies": {
         "com.unity.test-framework": "1.1.33",
