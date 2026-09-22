@@ -16,20 +16,20 @@ public class LegController : MonoBehaviour
     
     [Header("--- References ---")]
     [Tooltip("Scripts that handle IK and lerping the target")]
-    [SerializeField] private WalkerLeg[] legs;
-    [Tooltip("Tips of each leg so we can calculate the bodies rotation")]
+    [SerializeField] private WalkerLeg[] legScripts;
+    [Tooltip("Need these tips so we can calculate the tilt of the body")]
     [SerializeField] private Transform frontLeftTip;
     [SerializeField] private Transform frontRightTip;
     [SerializeField] private Transform backRightTip;
     [SerializeField] private Transform backLeftTip;
-    [SerializeField] private NavMeshAgent walkerNavmeshAgent;
     
     [Space]
     [Header("--- Leg Settings ---")]
     [Tooltip("Order in which the legs walk")]
     [SerializeField] private int[] stepOrder = { 0, 3, 1, 2 };
-    [Tooltip("A leg stretched this far past its own step threshold (1 = a whole extra threshold) is allowed to cut the line instead of waiting its turn")]
+    [Tooltip("A leg stretched this far past its own step threshold is allowed to skip the line and step first.")]
     [SerializeField] private float urgentStretch = 0.75f;
+    // The next leg to be screened for urgency
     private int _next;
     
     [Space]
@@ -82,7 +82,7 @@ public class LegController : MonoBehaviour
     private void OrderLegs()
     {
         // Wait until every foot is planted. If any leg is not grounded, this returns true.
-        if (legs.Any(leg => !leg.isFootGrounded)) return;
+        if (legScripts.Any(leg => !leg.isFootGrounded)) return;
         
         // This is the slot that wins this current frame. -1 is the nothing found exit below. A real slot is always greater than 0. Used to pick a leg in the walk order. 
         int chosenSlot = -1;
@@ -93,7 +93,7 @@ public class LegController : MonoBehaviour
             int slot = (_next + i) % stepOrder.Length;
             
             // This leg has an urgency below zero, re-run the loop.
-            if (legs[stepOrder[slot]].StepUrgency < 0f) continue;
+            if (legScripts[stepOrder[slot]].StepUrgency < 0f) continue;
 
             chosenSlot = slot;
             break;
@@ -106,15 +106,15 @@ public class LegController : MonoBehaviour
         // the legs ahead of it take tiny steps.
         for (int slot = 0; slot < stepOrder.Length; slot++)
         {
-            float urgency = legs[stepOrder[slot]].StepUrgency;
+            float urgency = legScripts[stepOrder[slot]].StepUrgency;
             if (urgency < urgentStretch) continue;
-            if (urgency <= legs[stepOrder[chosenSlot]].StepUrgency) continue;
+            if (urgency <= legScripts[stepOrder[chosenSlot]].StepUrgency) continue;
 
             chosenSlot = slot;
         }
 
         // Ask the leg to step. CheckForStep returns true if the leg has started a step.
-        bool didStep = legs[stepOrder[chosenSlot]].CheckForStep();
+        bool didStep = legScripts[stepOrder[chosenSlot]].CheckForStep();
         if (!didStep) return;
 
         // The turn resumes from whoever follows the leg that just stepped, so the gait keeps

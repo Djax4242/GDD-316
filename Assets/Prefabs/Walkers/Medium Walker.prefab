@@ -108,17 +108,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
   legIkTarget: {fileID: 960837377350181104}
-  raycastPosition: {fileID: 4974034886423679512}
-  legTip: {fileID: 6838374046907143345}
-  stepClips: []
-  legSource: {fileID: 0}
+  raycastOriginPosition: {fileID: 4974034886423679512}
   walkerNavmeshAgent: {fileID: 1424131519450301916}
   maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 4
-  stepOvershoot: 0.9
   minStepDuration: 0.2
   maxStepDuration: 0.5
   stepCurveHorizontal:
@@ -179,11 +175,16 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  stepAheadScalar: 0
   nextStepThreshold: 0.8
   isFootGrounded: 1
-  showRaycast: 1
-  showRaycastHitPosition: 1
+  showRaycast: 0
+  showRaycastHitPosition: 0
   showRaycastNormal: 0
+  showDirectionToStep: 0
+  showCurrentTipPos: 0
+  showOriginalFootPosition: 0
+  showOffsetFootTarget: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
 --- !u!1 &1191266890384525206
@@ -2200,17 +2201,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
   legIkTarget: {fileID: 125400768962193819}
-  raycastPosition: {fileID: 1743443841342405330}
-  legTip: {fileID: 1394034694819737925}
-  stepClips: []
-  legSource: {fileID: 0}
+  raycastOriginPosition: {fileID: 1743443841342405330}
   walkerNavmeshAgent: {fileID: 1424131519450301916}
   maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 4
-  stepOvershoot: 0.9
   minStepDuration: 0.2
   maxStepDuration: 0.5
   stepCurveHorizontal:
@@ -2271,11 +2268,16 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  stepAheadScalar: 0
   nextStepThreshold: 0.8
   isFootGrounded: 1
-  showRaycast: 1
-  showRaycastHitPosition: 1
+  showRaycast: 0
+  showRaycastHitPosition: 0
   showRaycastNormal: 0
+  showDirectionToStep: 0
+  showCurrentTipPos: 0
+  showOriginalFootPosition: 0
+  showOffsetFootTarget: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
 --- !u!1 &6350215803547577867
@@ -2695,7 +2697,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bce28f45bc2f7ef4cb6a29aebc51d5d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LargeWalkerLegController
-  legs:
+  legScripts:
   - {fileID: 2915706056476302489}
   - {fileID: 4073280123205693651}
   - {fileID: 42586736614682763}
@@ -2704,7 +2706,6 @@ MonoBehaviour:
   frontRightTip: {fileID: 1394034694819737925}
   backRightTip: {fileID: 6851233796437227765}
   backLeftTip: {fileID: 7746535848040632043}
-  walkerNavmeshAgent: {fileID: 1424131519450301916}
   stepOrder: 00000000030000000100000002000000i
   urgentStretch: 0.75
   tiltBody: 1
@@ -3219,17 +3220,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
   legIkTarget: {fileID: 3435888768685386844}
-  raycastPosition: {fileID: 3803527577505823887}
-  legTip: {fileID: 6851233796437227765}
-  stepClips: []
-  legSource: {fileID: 0}
+  raycastOriginPosition: {fileID: 3803527577505823887}
   walkerNavmeshAgent: {fileID: 1424131519450301916}
   maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 4
-  stepOvershoot: 0.9
   minStepDuration: 0.2
   maxStepDuration: 0.5
   stepCurveHorizontal:
@@ -3290,11 +3287,16 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  stepAheadScalar: 0
   nextStepThreshold: 0.8
   isFootGrounded: 1
-  showRaycast: 1
-  showRaycastHitPosition: 1
+  showRaycast: 0
+  showRaycastHitPosition: 0
   showRaycastNormal: 0
+  showDirectionToStep: 0
+  showCurrentTipPos: 0
+  showOriginalFootPosition: 0
+  showOffsetFootTarget: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
 --- !u!1 &8738257983685487015
@@ -3429,17 +3431,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkerLeg
   legIkTarget: {fileID: 2769881951223215507}
-  raycastPosition: {fileID: 3870150067031788614}
-  legTip: {fileID: 7746535848040632043}
-  stepClips: []
-  legSource: {fileID: 0}
+  raycastOriginPosition: {fileID: 3870150067031788614}
   walkerNavmeshAgent: {fileID: 1424131519450301916}
   maxStepRaycastDistance: 20
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 64
   minDistanceToStep: 4
-  stepOvershoot: 0.9
   minStepDuration: 0.2
   maxStepDuration: 0.5
   stepCurveHorizontal:
@@ -3500,11 +3498,16 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   stepHeight: 4
+  stepAheadScalar: 0
   nextStepThreshold: 0.8
   isFootGrounded: 1
-  showRaycast: 1
-  showRaycastHitPosition: 1
+  showRaycast: 0
+  showRaycastHitPosition: 0
   showRaycastNormal: 0
+  showDirectionToStep: 0
+  showCurrentTipPos: 0
+  showOriginalFootPosition: 0
+  showOffsetFootTarget: 0
   gizmoSphereSize: 0.5
   gizmoLength: 2
 --- !u!1 &8897150974433534361

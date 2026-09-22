@@ -17,12 +17,8 @@ public class WalkerLeg : MonoBehaviour
     [Tooltip("The IK target for this leg. This is the object that the animation rigging package made")]
     [SerializeField] private Transform legIkTarget;
     [Tooltip("Point at which the downwards raycast fires to check where to step")]
-    [SerializeField] private Transform raycastPosition;
-    [Tooltip("Need this to check to see if the leg is stretching")]
-    [SerializeField] private Transform legTip;
+    [SerializeField] private Transform raycastOriginPosition;
     [Space]
-    [SerializeField] private AudioClip[] stepClips;
-    [SerializeField] private AudioSource legSource;
     [SerializeField] private NavMeshAgent walkerNavmeshAgent;
 
 
@@ -34,10 +30,9 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private LayerMask invalidStepLayers;
     [Tooltip("The leg must be further than this distance to the raycast target to take a step")]
     [SerializeField] private float minDistanceToStep;
-    [Tooltip("How far past the home point the foot lands, as a fraction of minDistanceToStep. Keep below 1 or the leg will re-step immediately")]
-    [SerializeField, Range(0f, 0.9f)] private float stepOvershoot = 0.6f;
-    [Tooltip("Min time the leg takes to step. Based on speed")]
+    [Tooltip("Min time the leg takes to step. Based on speed of navmesh agent")]
     [SerializeField] private float minStepDuration;
+    [Tooltip("Max time the leg takes to step. Based on speed of navmesh agent")]
     [SerializeField] private float maxStepDuration;
     [Tooltip("The horizontal movement of the leg")]
     [SerializeField] private AnimationCurve stepCurveHorizontal;
@@ -45,6 +40,8 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private AnimationCurve stepCurveVertical;
     [Tooltip("How high the leg steps")]
     [SerializeField] private float stepHeight;
+    [Tooltip("How much the leg should step ahead where its trying to go. This helps turning look good and when the walker is faster than its legs can handle")]
+    [SerializeField] private float stepAheadScalar;
     [Tooltip("Percentage of the legs animation where the walker will allow another leg to step")]
     [SerializeField, Range(0f, 1f)] private float nextStepThreshold;
     // The current position of the tip of the leg irrespective of the raycast point
@@ -65,6 +62,8 @@ public class WalkerLeg : MonoBehaviour
     // True for the whole of TakeStep. isFootGrounded gets released early at nextStepThreshold so another leg
     // can start moving, so it can't also be the thing that stops this leg starting a second step on itself.
     private bool _isStepping;
+    // The original position of the tip of the foot before it began stepping
+    private Vector3 _originalFootPosition;
 
 
 
@@ -76,6 +75,14 @@ public class WalkerLeg : MonoBehaviour
     [SerializeField] private bool showRaycastHitPosition;
     [Tooltip("Show the normal of the downwards raycast for this leg")]
     [SerializeField] private bool showRaycastNormal;
+    [Tooltip("Shows the direction from the original position of the foot to its target")]
+    [SerializeField] private bool showDirectionToStep;
+    [Tooltip("Just use this to make sure that the script is properly tracking the tip position")]
+    [SerializeField] private bool showCurrentTipPos;
+    [Tooltip("Show the original position of the tip before it stepped")]
+    [SerializeField] private bool showOriginalFootPosition;
+    [Tooltip("Show the offset foot target based on where the walker is trying to go")]
+    [SerializeField] private bool showOffsetFootTarget;
     [SerializeField] private float gizmoSphereSize;
     [SerializeField] private float gizmoLength;
 
@@ -101,7 +108,7 @@ public class WalkerLeg : MonoBehaviour
         // controller can compare every leg against every other leg on the same frame to see which leg needs to step the most
 
         // First checks to see if we have a valid step target. This could be false if the walker was near an edge and the raycast fails.
-        _hasStepTarget = Physics.Raycast(raycastPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers);
+        _hasStepTarget = Physics.Raycast(raycastOriginPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers);
 
         //
         if (_hasStepTarget)
@@ -145,6 +152,7 @@ public class WalkerLeg : MonoBehaviour
 
     private IEnumerator TakeStep()
     {
+        // Calculate the time it will take for this step to occur based on the speed of the agent
         float lerpValue = walkerNavmeshAgent.velocity.magnitude / walkerNavmeshAgent.speed;
         _stepDuration = Mathf.Lerp(maxStepDuration, minStepDuration, lerpValue);
 
@@ -152,10 +160,12 @@ public class WalkerLeg : MonoBehaviour
         isFootGrounded = false;
         StepUrgency = -1f;
         float elapsedTime = 0;
-        Vector3 originalPosition = _currentTipPos;
+        
+        // Cache the original position of the tip. 
+        _originalFootPosition = _currentTipPos;
 
         // Fallback so the foot stays put if the raycast misses
-        Vector3 target = originalPosition;
+        Vector3 footTarget = _originalFootPosition;
 
         while (elapsedTime < _stepDuration)
         {
@@ -163,25 +173,22 @@ public class WalkerLeg : MonoBehaviour
 
             float n = Mathf.Clamp01(elapsedTime / _stepDuration);
             float t = stepCurveHorizontal.Evaluate(n);
-
-            // todo make a gizmo of the offset raycast origin
-
-            // Aim past the ray origin in the direction the foot is traveling.
-            Vector3 stepDirection = (raycastPosition.position - originalPosition).normalized;
-            Vector3 offsetRayOrigin = raycastPosition.position + stepDirection * (minDistanceToStep * stepOvershoot);
-
-            if (Physics.Raycast(offsetRayOrigin, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers)) target = hitInfo.point;
-
-            Vector3 pos = Vector3.Lerp(originalPosition, target, t);
+            
+            if (Physics.Raycast(raycastOriginPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers)) footTarget = hitInfo.point;
+            
+            // todo Get the point at the end of the direction vector. Using that, we can increase or decrease the direction vector based on how far ahead we want to step. 
+            
+            Vector3 footPosition = Vector3.Lerp(_originalFootPosition, footTarget, t);
 
             // Lift the leg off the ground
             float legLift = stepCurveVertical.Evaluate(n) * stepHeight;
-            pos += Vector3.up * legLift;
+            footPosition += Vector3.up * legLift;
 
-            _currentTipPos = pos;
+            _currentTipPos = footPosition;
             // Set the target here too so the IK doesn't lag a frame behind
-            legIkTarget.position = pos;
+            legIkTarget.position = footPosition;
 
+            // Allow other legs to step before this one has landed if nextStepThreshold is below 1
             if (n >= nextStepThreshold && !isFootGrounded)
             {
                 isFootGrounded = true;
@@ -192,9 +199,8 @@ public class WalkerLeg : MonoBehaviour
 
         // Make sure the foot ends exactly on the ground, even if the curves don't end perfectly
 
-        _currentTipPos = target;
-        if (legSource != null) legSource.PlayOneShot(stepClips[UnityEngine.Random.Range(0, stepClips.Length)]);
-        legIkTarget.position = target;
+        _currentTipPos = footTarget;
+        legIkTarget.position = footTarget;
 
         // isFootGrounded is normally already true from nextStepThreshold, but it still needs setting here for
         // the case where that threshold is 1 and the early release never ran.
@@ -211,11 +217,11 @@ public class WalkerLeg : MonoBehaviour
         if (showRaycast)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(raycastPosition.position, gizmoSphereSize);
-            Gizmos.DrawRay(raycastPosition.position, Vector3.down * maxStepRaycastDistance);
+            Gizmos.DrawSphere(raycastOriginPosition.position, gizmoSphereSize);
+            Gizmos.DrawRay(raycastOriginPosition.position, Vector3.down * maxStepRaycastDistance);
         }
 
-        if (Physics.Raycast(raycastPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers))
+        if (Physics.Raycast(raycastOriginPosition.position, Vector3.down, out RaycastHit hitInfo, maxStepRaycastDistance, ~invalidStepLayers))
         {
             if (showRaycastHitPosition)
             {
@@ -228,9 +234,34 @@ public class WalkerLeg : MonoBehaviour
                 Gizmos.color = Color.orangeRed;
                 Gizmos.DrawRay(hitInfo.point, hitInfo.normal * gizmoLength);
             }
+            
+            if (showDirectionToStep)
+            {
+                Gizmos.color = Color.deepPink;
+                Vector3 directionToNextStep = -(_currentTipPos - hitInfo.point).normalized;
+                Gizmos.DrawRay(_currentTipPos, directionToNextStep * minDistanceToStep);
+            }
+
+            if (showOffsetFootTarget)
+            {
+                Gizmos.color = Color.purple;
+                Vector3 directionToNextStep = -(_currentTipPos - hitInfo.point).normalized;
+                Vector3 stepOffsetTarget = _currentTipPos + directionToNextStep * stepAheadScalar;
+                Gizmos.DrawSphere(stepOffsetTarget, gizmoSphereSize);
+            }
         }
 
-        Gizmos.DrawSphere(_currentTipPos, gizmoSphereSize);
+        if (showOriginalFootPosition)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawSphere(_originalFootPosition, gizmoSphereSize);
+        }
+        
+        if (showCurrentTipPos)
+        {
+            Gizmos.color = Color.aquamarine;
+            Gizmos.DrawSphere(_currentTipPos, gizmoSphereSize);
+        }
     }
 
 #endif
