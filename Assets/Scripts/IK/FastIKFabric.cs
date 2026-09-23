@@ -20,7 +20,9 @@ public class FastIKFabric : MonoBehaviour
     [SerializeField] private int iterations = 10;
     [Tooltip("If the distance between the target and the tip is less than this, abandon solving")]
     [SerializeField] private float delta = 0.001f;
-
+    [Tooltip("If you want a snake like creature, ignore the backwards step of FARBIK")]
+    [SerializeField] private bool ignoreForwardsStep;
+    
     [Space]
     [Header("--- Chain Information ---")]
     [Tooltip("joints[0] is the root bone (not the tip) that never moves. Its the top of the chain. This also means that joints[chainLength] is this object. " +
@@ -108,7 +110,7 @@ public class FastIKFabric : MonoBehaviour
         int tipIndex = chainLength;
 
         // Check to see if the target and root are further than the total length of the chain. 
-        if ((targetPos - rootPos).sqrMagnitude >= totalLength * totalLength)
+        if ((targetPos - rootPos).sqrMagnitude >= totalLength * totalLength && !ignoreForwardsStep)
         {
             Vector3 dirToTarget = (targetPos - rootPos).normalized;
 
@@ -163,24 +165,28 @@ public class FastIKFabric : MonoBehaviour
                 }
 
                 // FORWARDS
-                
-                // Teleport the root joint to the root position
-                positions[0] = rootPos;
 
-                // Walk back up the chain to recalculate positions starting at the joint just after the root. 
-                // Start at 1 because the root was already teleported above. 
-                for (int i = 1; i <= tipIndex; i++)
+                if (!ignoreForwardsStep)
                 {
-                    // The joint one step closer to the root. 
-                    Vector3 parentJoint = positions[i - 1];
-                    float boneLength = lengths[i - 1];
+                    // Teleport the root joint to the root position
+                    positions[0] = rootPos;
+                    
+                    // Walk back up the chain to recalculate positions starting at the joint just after the root. 
+                    // Start at 1 because the root was already teleported above. 
+                    for (int i = 1; i <= tipIndex; i++)
+                    {
+                        // The joint one step closer to the root. 
+                        Vector3 parentJoint = positions[i - 1];
+                        float boneLength = lengths[i - 1];
 
-                    // Calculate our offset using the direction to the parent joint from the current position.
-                    Vector3 dirToThisJoint = (positions[i] - parentJoint).normalized;
-                    // Then calculate the offset needed. 
-                    Vector3 offset = dirToThisJoint * boneLength;
+                        // Calculate our offset using the direction to the parent joint from the current position.
+                        Vector3 dirToThisJoint = (positions[i] - parentJoint).normalized;
+                        // Then calculate the offset needed. 
+                        Vector3 offset = dirToThisJoint * boneLength;
 
-                    positions[i] = parentJoint + offset;
+                        positions[i] = parentJoint + offset;
+                    }
+
                 }
 
                 // Finally, this checks to see if the tip is already close enough to the target. If it is, we can end the loop early since we've already
@@ -189,7 +195,15 @@ public class FastIKFabric : MonoBehaviour
             }
         }
 
-        // Turn the solved points back into bone rotations.
+        // Snake mode: the root was allowed to drift during the backwards pass, so actually move it.
+        // Without this, positions[0] is thrown away, the root stays pinned, and we only get normal IK.
+        if (ignoreForwardsStep)
+        {
+            joints[0].position = positions[0];
+        }
+
+        
+// Turn the solved points back into bone rotations.
         for (int i = 0; i < chainLength; i++)
         {
             // Get the current direction to the next joint using this joint and the direction to its child. 
