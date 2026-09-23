@@ -1529,10 +1529,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Small Walker
       objectReference: {fileID: 0}
-    - target: {fileID: 4764223548919976197, guid: 5455f343705f0b646bed5afdc6582322, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1616,7 +1612,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 164.1
+      value: 161.1
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1624,31 +1620,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.98858607
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: -0.12948115
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: -0.05816241
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: -0.050491247
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: -15.182
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: -6.062
       objectReference: {fileID: 0}
     - target: {fileID: 5162871089950189362, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
+      value: -5.039
       objectReference: {fileID: 0}
     - target: {fileID: 5677803267577583830, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_Name
@@ -1656,7 +1652,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5677803267577583830, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4127,10 +4123,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Medium Walker
       objectReference: {fileID: 0}
-    - target: {fileID: 1648509859392219912, guid: 6ce40cd5fd7272c4aa9b45167e05c640, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4872079476270795042, guid: 6ce40cd5fd7272c4aa9b45167e05c640, type: 3}
       propertyPath: m_LocalPosition.x
       value: -769.7
@@ -4228,10 +4220,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Gigantic Walker
       objectReference: {fileID: 0}
-    - target: {fileID: 7139914659794983216, guid: 7dcd13ad44deb944b899b4de27b928f8, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4248,10 +4236,6 @@ PrefabInstance:
     - target: {fileID: 206310378412016944, guid: 827ccfc7007074148a9329bad94c36ec, type: 3}
       propertyPath: m_Name
       value: Large Walker
-      objectReference: {fileID: 0}
-    - target: {fileID: 206310378412016944, guid: 827ccfc7007074148a9329bad94c36ec, type: 3}
-      propertyPath: m_IsActive
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7883078029051481014, guid: 827ccfc7007074148a9329bad94c36ec, type: 3}
       propertyPath: m_LocalPosition.x
