@@ -1,5 +1,4 @@
 using System;
-using MCPForUnity.Editor.Services.AssetGen;
 using UnityEngine;
 
 public class HierarchAI : MonoBehaviour
