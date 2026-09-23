@@ -964,7 +964,7 @@ MonoBehaviour:
   legIkTarget: {fileID: 6986569857236433085}
   raycastOriginPosition: {fileID: 6984050981041286664}
   walkerNavmeshAgent: {fileID: 7753825885233770242}
-  maxStepRaycastDistance: 30
+  maxStepRaycastDistance: 50
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1868,7 +1868,7 @@ MonoBehaviour:
   legIkTarget: {fileID: 3719269693532897596}
   raycastOriginPosition: {fileID: 5740081540356478234}
   walkerNavmeshAgent: {fileID: 7753825885233770242}
-  maxStepRaycastDistance: 30
+  maxStepRaycastDistance: 50
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -2225,7 +2225,7 @@ MonoBehaviour:
   legIkTarget: {fileID: 6967227794287116710}
   raycastOriginPosition: {fileID: 8793176856336244197}
   walkerNavmeshAgent: {fileID: 7753825885233770242}
-  maxStepRaycastDistance: 30
+  maxStepRaycastDistance: 50
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -2797,7 +2797,7 @@ MonoBehaviour:
   legIkTarget: {fileID: 5405774850202602035}
   raycastOriginPosition: {fileID: 435473096606763239}
   walkerNavmeshAgent: {fileID: 7753825885233770242}
-  maxStepRaycastDistance: 30
+  maxStepRaycastDistance: 50
   invalidStepLayers:
     serializedVersion: 2
     m_Bits: 0
