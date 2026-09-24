@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3044702123074213569
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5426045613814768863}
+  - component: {fileID: 8048059593622237670}
+  - component: {fileID: 8905241222847176196}
+  - component: {fileID: 2501925926146686447}
+  - component: {fileID: 1710787855778796592}
+  m_Layer: 0
+  m_Name: ML Regent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5426045613814768863
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3044702123074213569}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8048059593622237670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3044702123074213569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db96fd3b96b01b13eb1806ec5ed3136a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkerRobotBuilder
+  robotDescription: {fileID: 4900000, guid: 13402d777f7d276dd970d6c72fb48d22, type: 3}
+  baseMaterial: {fileID: 0}
+  scale: 1
+  robotLayer: 2
+  spawnClearance: 0.01
+  showColliders: 0
+--- !u!114 &8905241222847176196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3044702123074213569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb2b26027302debe38ab8fa3b84cd168, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkerPolicy
+  policyModel: {fileID: 5022602860645237092, guid: d42866d76b3d77118a233cfbb62337a4, type: 3}
+  backend: 512
+  runSelfTest: 1
+--- !u!114 &2501925926146686447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3044702123074213569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c176a9b865266587a831a51073898987, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkerController
+  commandMode: 1
+  manualCommand: {x: 0.8, y: 0, z: 0}
+  target: {fileID: 0}
+  goalRadius: 40
+  maxSpeed: 8
+  minSpeed: 1.5
+  yawGain: 1
+  linearGain: 0.3
+  maxYawRate: 0.4
+  terrainLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  respawnIfFallen: 1
+  checkStandingPose: 1
+  showHeightScan: 0
+  showCommand: 0
+  currentCommand: {x: 0, y: 0, z: 0}
+--- !u!114 &1710787855778796592
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3044702123074213569}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1afa74e488e303ff0946389eaeec6c09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkerSkin
+  skinSource: {fileID: 5677803267577583830, guid: e3f17bb31b0d65346bd139b023d72c8b, type: 3}
+  logFit: 1

@@ -34,7 +34,7 @@ public class WalkerPolicy : MonoBehaviour
     };
 
     // From the robot description (joint order): standing angles, action scales, the self-test output.
-    private WalkerRobotBuilder.PolicyDescription _config;
+    [NonSerialized] private WalkerRobotBuilder.PolicyDescription _config;
 
     /// <summary> Length of the observation vector the policy expects. </summary>
     public int ObservationSize => Config.observationSize;

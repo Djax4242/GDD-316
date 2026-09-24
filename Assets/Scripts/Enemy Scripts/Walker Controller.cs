@@ -49,7 +49,7 @@ public class WalkerController : MonoBehaviour
     [SerializeField] private float minSpeed = 0.35f;
     [Tooltip("Turn rate per radian of heading error")]
     [SerializeField] private float yawGain = 1.5f;
-    [Tooltip("Forward speed per trained-size metre of distance")]
+    [Tooltip("Forward speed per trained-size metre of distance beyond the stopping radius")]
     [SerializeField] private float linearGain = 1f;
     [SerializeField] private float maxYawRate = 1.2f;
 
@@ -70,7 +70,7 @@ public class WalkerController : MonoBehaviour
 
     private WalkerRobotBuilder _robot;
     private WalkerPolicy _policy;
-    private WalkerRobotBuilder.PolicyDescription _config;
+    [NonSerialized] private WalkerRobotBuilder.PolicyDescription _config;
     private float[] _observation;
     private readonly float[] _targets = new float[WalkerPolicy.ActionSize];
     private Vector3[] _scanHits;
@@ -262,7 +262,9 @@ public class WalkerController : MonoBehaviour
         float headingError = Mathf.DeltaAngle(heading * Mathf.Rad2Deg, targetHeading * Mathf.Rad2Deg) * Mathf.Deg2Rad;
 
         float yawRate = Mathf.Clamp(yawGain * headingError, -maxYawRate, maxYawRate);
-        float speed = Mathf.Clamp(linearGain * distance, 0f, maxSpeed) * Mathf.Clamp01(Mathf.Cos(headingError));
+        // Speed grows with the distance past the stopping radius, so the walker eases in and settles at the
+        // target's pace instead of sprinting to the radius and stopping dead.
+        float speed = Mathf.Clamp(linearGain * (distance - goalRadius), 0f, maxSpeed) * Mathf.Clamp01(Mathf.Cos(headingError));
         if (speed < minSpeed) speed = Mathf.Abs(headingError) < 0.5f ? minSpeed : 0f;
 
         return new Vector3(speed, 0f, yawRate);

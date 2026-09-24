@@ -24,6 +24,8 @@ public class FrameRecorder : MonoBehaviour
     [Tooltip("Camera position relative to the walker's heading frame (x right, y up, z forward)")]
     [SerializeField] private Vector3 cameraOffset = new(55f, 22f, -40f);
     [SerializeField] private float maxSeconds = 40f;
+    [Tooltip("Optional second subject (e.g. the player being chased): the camera looks between the two")]
+    [SerializeField] private Transform alsoFrame;
 
     private RenderTexture _target;
     private Texture2D _readback;
@@ -52,7 +54,9 @@ public class FrameRecorder : MonoBehaviour
         Vector3 forward = Vector3.ProjectOnPlane(body.forward, Vector3.up).normalized;
         Quaternion heading = Quaternion.LookRotation(forward, Vector3.up);
         recordCamera.transform.position = _smoothedFocus + heading * cameraOffset;
-        recordCamera.transform.LookAt(_smoothedFocus + Vector3.up * 2f);
+        Vector3 look = _smoothedFocus + Vector3.up * 2f;
+        if (alsoFrame != null) look = Vector3.Lerp(look, alsoFrame.position, 0.5f);
+        recordCamera.transform.LookAt(look);
 
         recordCamera.targetTexture = _target;
         recordCamera.Render();

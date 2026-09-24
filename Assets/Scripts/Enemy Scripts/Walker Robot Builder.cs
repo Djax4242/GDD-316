@@ -178,7 +178,9 @@ public class WalkerRobotBuilder : MonoBehaviour
     [Tooltip("Draw every collider as a see-through red shape, to check the hitbox against the model")]
     [SerializeField] private bool showColliders;
 
-    private RobotDescription _description;
+    // NonSerialized: Unity keeps private fields of [Serializable] types across script reloads as empty
+    // objects, which would skip the lazy parse below and leave the robot with no joints.
+    [NonSerialized] private RobotDescription _description;
     private readonly List<Transform> _feet = new();
     private Mesh _sphereMesh;
 
