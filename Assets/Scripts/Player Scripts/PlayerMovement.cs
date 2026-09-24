@@ -51,10 +51,6 @@ public class PlayerMovement : MonoBehaviour
     private bool isGrounded = true;
     private int currentJumps;
     private bool canJump = true;
-
-    // The forces below were tuned at Unity's default 50 Hz physics. Scaling by this constant instead of
-    // Time.deltaTime keeps them the same when the physics rate changes (the ML walker runs physics at 1 kHz).
-    private const float TunedPhysicsStep = 0.02f;
     
     
     
@@ -89,7 +85,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 rbRelativeInput = (moveInput.x * playerRb.transform.right) + (moveInput.y * playerRb.transform.forward);
         
         // Move the player using the rb relative input
-        playerRb.AddForce(rbRelativeInput * (baseMoveSpeed * TunedPhysicsStep));
+        playerRb.AddForce(rbRelativeInput * (baseMoveSpeed * Time.deltaTime));
 
         // Clamp the players movement so they dont exceed the max speed
         Vector2 movementPlane = new Vector2(playerRb.linearVelocity.x, playerRb.linearVelocity.z);
@@ -107,7 +103,7 @@ public class PlayerMovement : MonoBehaviour
         if (!isGrounded)
         {
             Vector3 flattenedVelocity = new Vector3(playerRb.linearVelocity.x, 0, playerRb.linearVelocity.z);
-            playerRb.AddForce(-flattenedVelocity * (airBorneFriction * TunedPhysicsStep));
+            playerRb.AddForce(-flattenedVelocity * (airBorneFriction * Time.deltaTime));
         }
         else
         {
@@ -115,7 +111,7 @@ public class PlayerMovement : MonoBehaviour
             if (moveInput.sqrMagnitude < 0.1f)
             {
                 Vector3 flattenedVelocity = new Vector3(playerRb.linearVelocity.x, 0, playerRb.linearVelocity.z);
-                playerRb.AddForce(-flattenedVelocity * (groundedFriction * TunedPhysicsStep));
+                playerRb.AddForce(-flattenedVelocity * (groundedFriction * Time.deltaTime));
             }
         }
     }
@@ -130,12 +126,11 @@ public class PlayerMovement : MonoBehaviour
             
         if (currentJumps != 0)
         {
-            playerRb.linearVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
-
-            // One-off push, as an impulse so its strength does not depend on the physics step
-            playerRb.AddForce(Vector3.up * (jumpForce * TunedPhysicsStep), ForceMode.Impulse);
+            playerRb.AddForce(Vector3.up * jumpForce);
             canJump = false;
 
+            playerRb.linearVelocity = new Vector3(playerRb.linearVelocity.x, 0f, playerRb.linearVelocity.z);
+            
             StartCoroutine(JumpCooldown());
         }
     }

@@ -9,8 +9,10 @@ public class WalkerSkin : MonoBehaviour
     ///     prefab). A copy of the source is stripped down to its renderers and bones, lined up with the
     ///     physics robot, and every frame each leg bone is snapped to the physics link it belongs to.
     ///
-    ///     This works because the physics joints' zero pose is the FBX rest pose (flat, outstretched legs),
-    ///     which is also the pose the skinned meshes were bound in. The fit is logged so a mismatch shows up.
+    ///     Each physics link's +z (MuJoCo +x) runs along its leg segment, so every bone is turned from its
+    ///     bind direction onto its link's direction and pinned to the link's joint. When the joint-zero pose is
+    ///     the FBX rest pose that turn is zero; a model built with a fixed hip droop (the Regent) gets the
+    ///     droop applied to the skin the same way. The fit is logged so a mismatch shows up.
     ///
     /// </summary>
 
@@ -65,8 +67,11 @@ public class WalkerSkin : MonoBehaviour
         int[] legOfChain = FitSkinToRobot(chains, links);
         Dictionary<Transform, Matrix4x4> bind = BindPoses();
 
-        // Remember where every bone sits relative to its physics link, and the skin root relative to the body.
-        float worst = 0f;
+        // Remember how every bone sits on its physics link, and the skin root relative to the body.
+        // Bone heads are the joints, so a bone is pinned to its link's origin and turned from its bind direction
+        // (head to the next head) onto the link's segment direction (link +z). The check: with that turn, each
+        // bone's far end must land on the next link's joint, i.e. the segment lengths agree.
+        float worst = 0f, largestTurn = 0f;
         for (int c = 0; c < 4; c++)
         {
             for (int d = 0; d < 3; d++)
@@ -74,10 +79,18 @@ public class WalkerSkin : MonoBehaviour
                 Transform bone = chains[c][d];
                 Transform link = links[legOfChain[c]][d];
                 Matrix4x4 m = bind[bone];
-                Vector3 local = link.InverseTransformPoint(m.GetPosition());
-                _bones.Add((bone, link, local, Quaternion.Inverse(link.rotation) * m.rotation));
-                // Bone heads are the joints, so they should sit on the link origins.
-                worst = Mathf.Max(worst, local.magnitude);
+                Vector3 head = m.GetPosition();
+                Transform next = d < 2 ? chains[c][d + 1] : bone.Find(bone.name + "_end");
+                Vector3 bindDirection = next != null ? (d < 2 ? bind[next].GetPosition() : BindEnd(bone, m)) - head : link.forward;
+                Quaternion turn = Quaternion.FromToRotation(bindDirection, link.forward);
+                largestTurn = Mathf.Max(largestTurn, Quaternion.Angle(Quaternion.identity, turn));
+                _bones.Add((bone, link, Vector3.zero, Quaternion.Inverse(link.rotation) * (turn * m.rotation)));
+                if (d < 2)
+                {
+                    Vector3 end = link.position + turn * bindDirection;
+                    worst = Mathf.Max(worst, (end - links[legOfChain[c]][d + 1].position).magnitude);
+                }
+                worst = Mathf.Max(worst, (head - link.position).magnitude * (d == 0 ? 1f : 0f));
             }
         }
         _rootOffsetPosition = _robotRoot.InverseTransformPoint(_skin.position);
@@ -87,8 +100,16 @@ public class WalkerSkin : MonoBehaviour
         {
             float relative = worst / Mathf.Max(robot.Scale, 1e-3f);
             string verdict = relative < 0.01f ? "lined up" : "NOT lined up, the skin will not match the physics";
-            Debug.Log($"{name}: skin from {skinSource.name} {verdict} (worst bone-to-joint gap {worst:F3} m)", this);
+            Debug.Log($"{name}: skin from {skinSource.name} {verdict} (worst bone-to-joint gap {worst:F3} m, bones turned up to {largestTurn:F1} deg onto the links)", this);
         }
+    }
+
+
+    private static Vector3 BindEnd(Transform bone, Matrix4x4 bindPose)
+    {
+        // The _end bone carries no skin weights, so it has no bind pose; use its rest offset from the bone.
+        Transform end = bone.Find(bone.name + "_end");
+        return bindPose.MultiplyPoint3x4(end.localPosition);
     }
 
 

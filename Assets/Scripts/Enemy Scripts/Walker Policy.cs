@@ -6,16 +6,16 @@ public class WalkerPolicy : MonoBehaviour
 {
     /// <summary>
     ///
-    ///     Loads the trained LargeWalker ONNX policy and runs it. Feed it the 235 float observation
-    ///     every policy step (50 Hz) and it hands back 12 actions. ActionsToJointTargets turns those
-    ///     actions into joint angle targets for the PD drives.
+    ///     Loads a trained walker ONNX policy and runs it. Feed it the observation every policy step and
+    ///     it hands back 12 actions. ActionsToJointTargets turns those actions into joint angle targets for
+    ///     the PD drives. Sizes, standing angles and action scales come from the robot description's
+    ///     policy block (WalkerRobotBuilder.Policy), so the same script runs the LargeWalker and the Regent.
     ///
     /// </summary>
 
 
 
     // Observation layout, in order. Everything is in the body frame (x forward, y left, z up, MuJoCo convention).
-    public const int ObservationSize = 235;
     public const int ActionSize = 12;
     public const int LinVelOffset = 0;         // 3  linear velocity (m/s)
     public const int AngVelOffset = 3;         // 3  angular velocity (rad/s)
@@ -24,7 +24,7 @@ public class WalkerPolicy : MonoBehaviour
     public const int JointVelOffset = 21;      // 12 joint velocity, joint order
     public const int LastActionOffset = 33;    // 12 previous raw actions, joint order
     public const int CommandOffset = 45;       // 3  (vx, vy, yaw rate)
-    public const int HeightScanOffset = 48;    // 187 (17 x 11 grid, x fastest), body height above hit * 0.2
+    public const int HeightScanOffset = 48;    // scan grid (x fastest), body height above hit / max distance
 
     // Joint positions, joint velocities, previous actions and the actions themselves all use this order.
     public static readonly string[] JointNames =
@@ -33,21 +33,18 @@ public class WalkerPolicy : MonoBehaviour
         "RL_coxa_joint", "RL_femur_joint", "RL_tibia_joint", "RR_coxa_joint", "RR_femur_joint", "RR_tibia_joint"
     };
 
-    // Per joint type (coxa, femur, tibia). Joint j has type j % 3.
-    private static readonly float[] StandingAngle = { 0f, 0.1745f, -1.4835f };
-    private static readonly float[] ActionScale = { 0.1140f, 0.1163f, 0.1256f };
+    // From the robot description (joint order): standing angles, action scales, the self-test output.
+    private WalkerRobotBuilder.PolicyDescription _config;
 
-    // ONNX output for the standing observation, computed in Python from the same file.
-    private static readonly float[] SelfTestExpected =
-    {
-        -0.09510f, -0.38788f, -0.12779f, -0.06498f, -0.62404f, -0.03433f,
-        0.12240f, -0.48866f, 0.08653f, 0.03362f, -0.40376f, -0.13268f
-    };
+    /// <summary> Length of the observation vector the policy expects. </summary>
+    public int ObservationSize => Config.observationSize;
+    /// <summary> The policy block of the robot description. </summary>
+    public WalkerRobotBuilder.PolicyDescription Config => _config ??= GetComponent<WalkerRobotBuilder>().Policy;
 
 
 
     [Header("--- References ---")]
-    [Tooltip("The trained policy. Drag Assets/Models/LargeWalkerPolicy.onnx here")]
+    [Tooltip("The trained policy, e.g. Assets/Models/RegentPolicy.onnx. It must match the robot description on the WalkerRobotBuilder")]
     [SerializeField] private ModelAsset policyModel;
 
     [Space]
@@ -89,6 +86,15 @@ public class WalkerPolicy : MonoBehaviour
         }
         _outputName = model.outputs[0].name;
 
+        // The ONNX input width must match the robot description, or the wrong pair was dragged in.
+        int width = model.inputs[0].shape.Get(1);
+        if (width != ObservationSize)
+        {
+            Debug.LogError($"{name}: {policyModel.name} takes {width} observations but the robot description says {ObservationSize}", this);
+            enabled = false;
+            return;
+        }
+
         _worker = new Worker(model, backend);
         _input = new Tensor<float>(new TensorShape(1, ObservationSize));
     }
@@ -117,7 +123,7 @@ public class WalkerPolicy : MonoBehaviour
         _input.Upload(observation);
         _worker.Schedule(_input);
 
-        // DownloadToArray blocks until the result is ready, fine at 50 Hz on the CPU backend.
+        // DownloadToArray blocks until the result is ready, fine at 10-50 Hz on the CPU backend.
         var output = _worker.PeekOutput(_outputName) as Tensor<float>;
         float[] result = output.DownloadToArray();
         Array.Copy(result, _actions, ActionSize);
@@ -134,25 +140,21 @@ public class WalkerPolicy : MonoBehaviour
     ///     Turns raw actions into joint angle targets (radians, MuJoCo joint convention), joint order.
     ///     target = standing angle + action * scale. The actions are not clipped, same as in training.
     /// </summary>
-    public static void ActionsToJointTargets(float[] actions, float[] targetsOut)
+    public void ActionsToJointTargets(float[] actions, float[] targetsOut)
     {
-        for (int j = 0; j < ActionSize; j++)
-        {
-            int type = j % 3;
-            targetsOut[j] = StandingAngle[type] + actions[j] * ActionScale[type];
-        }
+        for (int j = 0; j < ActionSize; j++) targetsOut[j] = Config.standingAngles[j] + actions[j] * Config.actionScale[j];
     }
 
     /// <summary> Standing angle of joint j (joint order), radians. </summary>
-    public static float StandingJointAngle(int j) => StandingAngle[j % 3];
+    public float StandingJointAngle(int j) => Config.standingAngles[j];
 
     /// <summary> Observation of the walker standing still and upright on flat ground with a zero command. </summary>
-    public static float[] StandingObservation()
+    public float[] StandingObservation()
     {
         var obs = new float[ObservationSize];
         obs[GravityOffset + 2] = -1f;
-        // Root sits 0.48 m above the ground when standing, scaled by 0.2
-        for (int i = HeightScanOffset; i < ObservationSize; i++) obs[i] = 0.48f * 0.2f;
+        // Every scan ray sees flat ground one standing height below the body, over the scan range.
+        for (int i = HeightScanOffset; i < ObservationSize; i++) obs[i] = Config.standHeight / Config.scanMaxDistance;
         return obs;
     }
 
@@ -163,7 +165,7 @@ public class WalkerPolicy : MonoBehaviour
 
         float worstError = 0f;
         for (int a = 0; a < ActionSize; a++)
-            worstError = Mathf.Max(worstError, Mathf.Abs(actions[a] - SelfTestExpected[a]));
+            worstError = Mathf.Max(worstError, Mathf.Abs(actions[a] - Config.selfTestExpected[a]));
 
         if (worstError < 1e-3f)
             Debug.Log($"{name}: walker policy loaded, self test passed (max error {worstError:E1})", this);

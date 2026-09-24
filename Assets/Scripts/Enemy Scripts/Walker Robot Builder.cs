@@ -30,6 +30,7 @@ public class WalkerRobotBuilder : MonoBehaviour
         public BodyDescription[] bodies;
         public MeshDescription[] meshes;
         public FootDescription[] standingFeet;
+        public PolicyDescription policy;
     }
 
     [Serializable] private class BodyDescription
@@ -64,6 +65,7 @@ public class WalkerRobotBuilder : MonoBehaviour
         public float height;
         public float[] size;
         public float friction;
+        public int mesh;
     }
 
     [Serializable] private class VisualDescription
@@ -89,6 +91,68 @@ public class WalkerRobotBuilder : MonoBehaviour
         public float[] position;
     }
 
+    /// <summary>
+    ///     How the trained policy expects to be driven, written by export_unity_robot.py next to the robot. All
+    ///     per-joint arrays are in the policy's joint order (WalkerPolicy.JointNames), at the trained size.
+    /// </summary>
+    [Serializable] public class PolicyDescription
+    {
+        public int observationSize;
+        public int actionSize;
+        public float policyStep;
+        public float[] standingAngles;
+        public float[] actionScale;
+        public float[] stiffness;
+        public float[] damping;
+        public float[] effortLimit;
+        public int scanCountX;
+        public int scanCountY;
+        public float scanSpacingX;
+        public float scanSpacingY;
+        public float scanMaxDistance;
+        public float standHeight;
+        public float[] selfTestExpected;
+        public float[] commandMin;
+        public float[] commandMax;
+
+        public bool IsSet => observationSize > 0;
+
+        /// <summary> The first LargeWalker policy (0.1 scale, run lw_rough_v1), whose JSON has no policy block. </summary>
+        public static PolicyDescription LargeWalkerV1()
+        {
+            float[] PerType(float coxa, float femur, float tibia)
+            {
+                var a = new float[12];
+                for (int j = 0; j < 12; j++) a[j] = j % 3 == 0 ? coxa : j % 3 == 1 ? femur : tibia;
+                return a;
+            }
+            return new PolicyDescription
+            {
+                observationSize = 235,
+                actionSize = 12,
+                policyStep = 0.02f,
+                standingAngles = PerType(0f, 0.1745f, -1.4835f),
+                actionScale = PerType(0.1140f, 0.1163f, 0.1256f),
+                stiffness = PerType(197.392f, 386.888f, 238.845f),
+                damping = PerType(12.566f, 24.630f, 15.205f),
+                effortLimit = PerType(90f, 180f, 120f),
+                scanCountX = 17,
+                scanCountY = 11,
+                scanSpacingX = 0.15f,
+                scanSpacingY = 0.15f,
+                scanMaxDistance = 5f,
+                standHeight = 0.48f,
+                selfTestExpected = new[]
+                {
+                    -0.09510f, -0.38788f, -0.12779f, -0.06498f, -0.62404f, -0.03433f,
+                    0.12240f, -0.48866f, 0.08653f, 0.03362f, -0.40376f, -0.13268f
+                },
+                commandMin = new[] { -1.2f, -0.6f, -1.2f },
+                commandMax = new[] { 2.0f, 0.6f, 1.2f },
+            };
+        }
+    }
+
     #endregion
 
 
@@ -109,6 +173,11 @@ public class WalkerRobotBuilder : MonoBehaviour
     [Tooltip("Extra height above the standing pose when spawning, so the feet do not start inside the ground")]
     [SerializeField] private float spawnClearance = 0.01f;
 
+    [Space(3)]
+    [Header("=== DEBUG ===")]
+    [Tooltip("Draw every collider as a see-through red shape, to check the hitbox against the model")]
+    [SerializeField] private bool showColliders;
+
     private RobotDescription _description;
     private readonly List<Transform> _feet = new();
     private Mesh _sphereMesh;
@@ -119,11 +188,22 @@ public class WalkerRobotBuilder : MonoBehaviour
     public ArticulationBody[] Joints { get; private set; }
     /// <summary> Passive joint damping from the MuJoCo model (N m s / rad), joint order. </summary>
     public float[] JointDamping { get; private set; }
+    /// <summary> Standing angle of each joint from the robot description (radians), joint order. </summary>
+    public float[] StandingAngles { get; private set; }
     /// <summary> Where the MuJoCo IMU site sits, in the root's local frame. </summary>
     public Vector3 ImuLocalPosition { get; private set; }
     public float StandingHeight => _description.standingHeight * scale;
     /// <summary> Size relative to the trained robot, fixed once the robot is built. </summary>
     public float Scale => scale;
+    /// <summary> How to drive the trained policy (from the robot description; LargeWalker v1 if it has none). </summary>
+    public PolicyDescription Policy
+    {
+        get
+        {
+            Parse();
+            return _description.policy != null && _description.policy.IsSet ? _description.policy : PolicyDescription.LargeWalkerV1();
+        }
+    }
 
 
     private void Awake()
@@ -159,7 +239,7 @@ public class WalkerRobotBuilder : MonoBehaviour
 
         for (int j = 0; j < Joints.Length; j++)
         {
-            Joints[j].jointPosition = new ArticulationReducedSpace(WalkerPolicy.StandingJointAngle(j));
+            Joints[j].jointPosition = new ArticulationReducedSpace(StandingAngles[j]);
             Joints[j].jointVelocity = new ArticulationReducedSpace(0f);
             Joints[j].jointForce = new ArticulationReducedSpace(0f);
         }
@@ -182,16 +262,22 @@ public class WalkerRobotBuilder : MonoBehaviour
     }
 
 
+    private void Parse()
+    {
+        // Parsed on first use: the policy and controller may ask for it before this component's Awake.
+        if (_description == null) _description = JsonUtility.FromJson<RobotDescription>(robotDescription.text);
+    }
+
     private void Build()
     {
-        _description = JsonUtility.FromJson<RobotDescription>(robotDescription.text);
+        Parse();
         _sphereMesh = BorrowSphereMesh();
 
         var meshes = new Mesh[_description.meshes.Length];
         for (int m = 0; m < meshes.Length; m++) meshes[m] = BuildMesh(_description.meshes[m], scale);
 
         var links = new ArticulationBody[_description.bodies.Length];
-        var joints = new Dictionary<string, (ArticulationBody body, float damping)>();
+        var joints = new Dictionary<string, (ArticulationBody body, float damping, float standing)>();
 
         // A WalkerSkin with a source replaces the plain built-in meshes.
         var skin = GetComponent<WalkerSkin>();
@@ -211,7 +297,7 @@ public class WalkerRobotBuilder : MonoBehaviour
 
             if (!useSkin)
                 foreach (VisualDescription visual in body.visuals) AddVisual(link.transform, visual, meshes);
-            foreach (ColliderDescription collider in body.colliders) AddCollider(link.transform, collider);
+            foreach (ColliderDescription collider in body.colliders) AddCollider(link.transform, collider, meshes);
 
             var articulation = link.AddComponent<ArticulationBody>();
             // Mass grows with volume (scale^3), inertia with mass times length squared (scale^5).
@@ -244,8 +330,8 @@ public class WalkerRobotBuilder : MonoBehaviour
                 drive.forceLimit = float.MaxValue;
                 articulation.xDrive = drive;
 
-                // Damping is a torque per angular speed, which scales like the PD damping gain (scale^3.5).
-                joints[body.jointName] = (articulation, body.jointDamping * Mathf.Pow(scale, 3.5f));
+                // Damping is a torque per angular speed: scale^4 torque over scale^-0.5 speed = scale^4.5.
+                joints[body.jointName] = (articulation, body.jointDamping * Mathf.Pow(scale, 4.5f), body.jointStanding);
             }
 
             if (isRoot)
@@ -258,16 +344,17 @@ public class WalkerRobotBuilder : MonoBehaviour
 
         Joints = new ArticulationBody[WalkerPolicy.JointNames.Length];
         JointDamping = new float[Joints.Length];
+        StandingAngles = new float[Joints.Length];
         for (int j = 0; j < Joints.Length; j++)
         {
-            (Joints[j], JointDamping[j]) = joints[WalkerPolicy.JointNames[j]];
+            (Joints[j], JointDamping[j], StandingAngles[j]) = joints[WalkerPolicy.JointNames[j]];
         }
 
         // Every joint is still at zero here, which is the pose the skin lines up against.
         if (useSkin) skin.Attach(this);
     }
 
-    private void AddCollider(Transform link, ColliderDescription description)
+    private void AddCollider(Transform link, ColliderDescription description, Mesh[] meshes)
     {
         var holder = new GameObject(description.name) { layer = robotLayer };
         holder.transform.SetParent(link, false);
@@ -297,6 +384,13 @@ public class WalkerRobotBuilder : MonoBehaviour
                 hull.convex = true;
                 collider = hull;
                 break;
+            case "convex":
+                // A convex hull piece of the model, the same shape MuJoCo collides with.
+                var piece = holder.AddComponent<MeshCollider>();
+                piece.sharedMesh = meshes[description.mesh];
+                piece.convex = true;
+                collider = piece;
+                break;
             default:
                 Debug.LogWarning($"{name}: unknown collider type {description.type}", this);
                 Destroy(holder);
@@ -316,6 +410,44 @@ public class WalkerRobotBuilder : MonoBehaviour
         };
 
         if (description.name.Contains("foot")) _feet.Add(holder.transform);
+        if (showColliders) ShowCollider(holder.transform, description, meshes);
+    }
+
+    private void ShowCollider(Transform holder, ColliderDescription description, Mesh[] meshes)
+    {
+        // A see-through red copy of the collider shape, for checking the hitbox against the model.
+        var view = new GameObject("collider view");
+        view.transform.SetParent(holder, false);
+        Mesh mesh;
+        switch (description.type)
+        {
+            case "convex":
+                mesh = meshes[description.mesh];
+                break;
+            case "sphere":
+                mesh = _sphereMesh;
+                view.transform.localScale = Vector3.one * (description.radius * 2f * scale);
+                break;
+            case "ellipsoid":
+                // The holder is already stretched to the ellipsoid.
+                mesh = _sphereMesh;
+                break;
+            default:
+                Destroy(view);
+                return;
+        }
+        view.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var material = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", 0f);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        material.SetInt("_ZWrite", 0);
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+        material.color = new Color(1f, 0.15f, 0.05f, 0.35f);
+        view.AddComponent<MeshRenderer>().sharedMaterial = material;
     }
 
     private void AddVisual(Transform link, VisualDescription description, Mesh[] meshes)
